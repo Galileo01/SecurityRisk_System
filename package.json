@@ -1,0 +1,27 @@
+{
+  "name": "security_risk",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve --open",
+    "build": "vue-cli-service build",
+    "remote": "scp -r ./dist  admin@121.41.225.12:/home/admin/projects/sr"
+  },
+  "dependencies": {
+    "ant-design-vue": "^1.7.2",
+    "axios": "^0.21.0",
+    "core-js": "^3.6.5",
+    "echarts": "^4.9.0",
+    "vue": "^2.6.11",
+    "vue-router": "^3.2.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-router": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "babel-plugin-import": "^1.13.1",
+    "less": "^3.12.2",
+    "less-loader": "^7.0.2",
+    "vue-template-compiler": "^2.6.11"
+  }
+}
