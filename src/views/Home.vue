@@ -1,72 +1,114 @@
 <template>
   <div class="home">
-    <a-spin
-      :spinning="spinning"
-      size="large"
-    >
-      <a-row
-        type="flex"
-        justify="space-between"
-        class="wapper"
-      >
-        <a-col :span="4">左侧</a-col>
-        <a-col :span="16">
-          <div
-            id="chart"
-            v-show="mapType==='echarts'"
-            class="map_container"
+    <a-layout>
+      <a-layout-header>
+        <div class="header_wapper">
+          <div class="left">
+            <a-button size="small">实时检测</a-button>
+            <a-button size="small">统计分析1</a-button>
+            <a-button size="small">统计分析2</a-button>
+          </div>
+          <p class="header">安全风险源动态管理系统</p>
+          <div class="right">
+            <a-button size="small">统计分析3</a-button>
+            <a-button size="small">统计分析4</a-button>
+            <a-button size="small">统计分析5</a-button>
+          </div>
+        </div>
+      </a-layout-header>
+      <a-layout-content>
+        <a-spin
+          :spinning="spinning"
+          size="large"
+        >
+          <a-row
+            type="flex"
+            justify="space-between"
+            class="wapper"
           >
-          </div>
-          <div
-            id="gaodemap"
-            v-show="mapType==='map'"
-            class="map_container"
-          >
-          </div>
-          <div class="type_box">
-            <div class="type">
-              <div class="color type1"></div>
-              type1
-            </div>
-            <div class="type">
-              <div class="color type2"></div>
-              type2
-            </div>
-            <div class="type">
-              <div class="color type3"></div>
-              type3
-            </div>
-            <div class="type">
-              <div class="color type4"></div>
-              type4
-            </div>
-          </div>
-          <div class="tool-bar">
-            <a-button
-              type=""
-              size="small"
-              @click="switchMapType"
-              :disabled="mapType==='echarts'"
-            >聚合</a-button>
-            <a-button
-              type=""
-              size="small"
-              :disabled="mapType==='map'"
-              @click="switchMapType"
-            >详细</a-button>
-          </div>
-        </a-col>
-        <a-col :span="2">右侧</a-col>
-      </a-row>
-    </a-spin>
+            <a-col
+              :span="7"
+              class="left_side"
+            >
+              <div class="weather_wapper">
+                天气查询
+              </div>
+              <div class="risk_source">
+                风险源统计
+              </div>
+              <div class="company_list">
+                重点关注企业列表
+              </div>
 
+            </a-col>
+            <a-col :span="16">
+              <div
+                id="chart"
+                v-show="mapType==='echarts'"
+                class="map_container"
+              >
+              </div>
+              <div
+                id="gaodemap"
+                v-show="mapType==='map'"
+                class="map_container"
+              >
+              </div>
+              <div class="type_box">
+                <div class="type">
+                  <div class="color type1"></div>
+                  type1
+                </div>
+                <div class="type">
+                  <div class="color type2"></div>
+                  type2
+                </div>
+                <div class="type">
+                  <div class="color type3"></div>
+                  type3
+                </div>
+                <div class="type">
+                  <div class="color type4"></div>
+                  type4
+                </div>
+              </div>
+              <div class="tool-bar">
+                <a-button
+                  type=""
+                  size="small"
+                  @click="switchMapType"
+                  :disabled="mapType==='echarts'"
+                >聚合</a-button>
+                <a-button
+                  type=""
+                  size="small"
+                  :disabled="mapType==='map'"
+                  @click="switchMapType"
+                >详细</a-button>
+              </div>
+            </a-col>
+            <!-- <a-col :span="1">右侧</a-col> -->
+          </a-row>
+          <div class="side_button">
+            <div class="left_btn">
+              <a-icon type="double-right" @click="userDrawerVisible=true"/>
+            </div>
+            <div class="right_btn">
+              <a-icon type="double-left" />
+            </div>
+          </div>
+        </a-spin>
+
+      </a-layout-content>
+    </a-layout>
+
+    <!--地图 抽屉-->
     <a-drawer
-      title="Basic Drawer"
+      title="检查点信息"
       placement="right"
-      :mask="false"
-      :visible="drawerVisible"
+      :visible="checkPointDrawerVisible"
       :after-visible-change="afterVisibleChange"
-      @close="closeDrawer"
+      @close="closeCheckPointDrawer"
       width="22vw"
     >
       <a-row>
@@ -94,6 +136,15 @@
         <a-col :span="16">{{drawerContent.companyName}}</a-col>
       </a-row>
     </a-drawer>
+    <!--个人中心 抽屉-->
+    <a-drawer
+      title="个人中心"
+      placement="left"
+      :visible="userDrawerVisible"
+      :after-visible-change="afterVisibleChange"
+      @close="closeUserDrawer"
+      width="20vw"
+    ></a-drawer>
   </div>
 </template>
 
@@ -118,8 +169,10 @@ export default {
       amap: null, //高德地图 实例
       mapController: null, //高德地图控制器
       mapCenter: [],
-      //抽屉弹框
-      drawerVisible: false,
+      //检查点抽屉弹框
+      checkPointDrawerVisible: false,
+      //用户中心抽屉
+      userDrawerVisible: false,
       drawerContent: {
         name: "",
         position: [],
@@ -139,7 +192,7 @@ export default {
       this.data.checkPoints = getCheckPoints();
     },
     switchMapType() {
-      this.closeDrawer();
+      this.closeCheckPointDrawer();
       this.mapType = this.mapType === "map" ? "echarts" : "map";
     },
     //初始化 并渲染地图
@@ -167,7 +220,7 @@ export default {
           const { name, value } = params;
           this.drawerContent.name = name;
           this.drawerContent.position = value;
-          this.drawerVisible = true;
+          this.checkPointDrawerVisible = true;
           console.log(params);
         }
       );
@@ -184,7 +237,7 @@ export default {
         // console.log(name, index, position);
         this.drawerContent.name = name;
         this.drawerContent.position = position;
-        this.drawerVisible = true;
+        this.checkPointDrawerVisible = true;
       });
 
       //绑定 mouseover 事件，显示信息窗口
@@ -214,8 +267,13 @@ export default {
     setOption(option) {
       this.chart.setOption(option);
     },
-    closeDrawer() {
-      this.drawerVisible = false;
+    //关闭 检查点 信息抽屉
+    closeCheckPointDrawer() {
+      this.checkPointDrawerVisible = false;
+    },
+    //关闭 个人中心信息抽屉
+    closeUserDrawer(){
+      this.userDrawerVisible=false;
     },
     afterVisibleChange() {},
     //高德地图初始化
@@ -236,17 +294,26 @@ export default {
         ],
       });
 
-      AMap.plugin(["AMap.Scale", "AMap.HawkEye", "AMap.Geolocation"], () => {
-        const scale = new AMap.Scale();
-        // const HawkEye = new AMap.HawkEye();
-        // const MapType = new AMap.MapType();
-        // const Geolocation = new AMap.Geolocation();
-        // this.amap.addControl(toolbar);
-        this.amap.addControl(scale);
-        // this.amap.addControl(HawkEye);
-        // this.amap.addControl(MapType);
-        // this.amap.addControl(Geolocation);
-      });
+      AMap.plugin(
+        ["AMap.Scale", "AMap.HawkEye", "AMap.Geolocation", "AMap.Weather"],
+        () => {
+          const scale = new AMap.Scale();
+          // const HawkEye = new AMap.HawkEye();
+          // const MapType = new AMap.MapType();
+          // const Geolocation = new AMap.Geolocation();
+          // this.amap.addControl(toolbar);
+          this.amap.addControl(scale);
+          // this.amap.addControl(HawkEye);
+          // this.amap.addControl(MapType);
+          // this.amap.addControl(Geolocation);
+          const weather = new AMap.Weather();
+
+          //执行实时天气信息查询
+          weather.getLive("永川区三教镇", function (err, data) {
+            console.log(err, data);
+          });
+        }
+      );
       //土块加载完成
       this.amap.on("complete", () => {
         this.spinning = false;
@@ -278,8 +345,45 @@ export default {
   height: 100%;
   // background:url(../assets/img/bg.jpg);
   /deep/.ant-spin-container {
-    height: 100vh; //spin 组件默认称其 整屏
+    height: calc(100vh - 64px - 20px); //spin 组件默认称其 整屏
   }
+  .ant-layout {
+    background-color: none;
+  }
+  .ant-layout-header .header_wapper {
+    height: 100%;
+    color: #fff;
+    display: flex;
+    justify-content: space-around;
+    .left,
+    .right {
+      width: 30%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  .ant-layout-content {
+    padding: 10px 10px 10px 30px;
+  }
+  .left_side {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    > div {
+      border: 1px solid black;
+    }
+    .weather_wapper {
+      height: 30%;
+    }
+    .risk_source {
+      height: 32%;
+    }
+    .company_list {
+      height: 32%;
+    }
+  }
+
   .wapper {
     height: 100%;
   }
@@ -298,7 +402,8 @@ export default {
     }
   }
   .type_box {
-    width: 100px;
+    width: 7vw;
+    min-width: 100px;
     padding: 8px;
     font-size: 12px;
     line-height: 1.5;
@@ -335,6 +440,31 @@ export default {
       .type4 {
         background-color: #1296db;
       }
+    }
+  }
+  //左右侧的 划出 按钮
+  .side_button {
+    > div {
+      width: 20px;
+      height: 20vh;
+      position: fixed;
+      background-color: red;
+      display: grid; //快速居中
+      place-items: center;
+      .anticon {
+        cursor: pointer;
+        color: #fff;
+      }
+    }
+    .left_btn {
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .right_btn {
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
     }
   }
 }
