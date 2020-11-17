@@ -13,6 +13,7 @@ import {
     Modal,
     Drawer,
     Layout,
+    Alert
 } from "ant-design-vue";
 
 Vue.use(Button);
@@ -26,6 +27,7 @@ Vue.use(Col)
 Vue.use(Modal)
 Vue.use(Drawer)
 Vue.use(Layout)
+Vue.use(Alert)
 Vue.prototype.$message = message;
 // Vue.prototype.$confirm = MessageBox.confirm;
 

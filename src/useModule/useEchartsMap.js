@@ -136,4 +136,7 @@ export class echartMapController {
     bindMakersEventHandler(eventType, target, handler) {
         this.echartsIns.on(eventType, target, handler);
     }
+    setOptions(option){
+        this.echartsIns.setOption(option)
+    }
 }
