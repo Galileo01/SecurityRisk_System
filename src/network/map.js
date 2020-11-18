@@ -17,7 +17,7 @@ export function getYongchuanBoundary() {
     })
 }
 
-//计算 边界
+//计算 地图边界 用于绘制 地图轮廓
 function calBounds(locations) {
     const AMap = window.AMap;
     for (let i = 0; i < locations.length; i++) {
@@ -32,33 +32,7 @@ function calBounds(locations) {
             }
         });
         //获取整个边框
-        if (i == 0) {
-            let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-            locations[i].locations.split("|").forEach((locs, idx) => {
-                if (locs == "") return;
-                locs.split(";").forEach((p, j) => {
-                    if (p == "") return;
-                    var pp = p.split(",");//分割出 经纬度
-                    let x = pp[0] * 1;//转换为 数字
-                    let y = pp[1] * 1;
-                    if (i == 0 && j == 0) {
-                        x1 = x
-                        x2 = x
-                        y1 = y
-                        y2 = y2
-
-                    }
-                    else {
-                        x1 = Math.min(x1, x)
-                        x2 = Math.max(x2, x)
-                        y1 = Math.min(y1, y)
-                        y2 = Math.max(y2, y)
-                    }
-                });
-
-            });
-            locations[0].Rect = { x1, x2, y1, y2 }
-        }
+        
         //TODO:获取每个区域的边框 和 center
         locations[i].locations.split("|").forEach((locs, idx) => {
             if (locs == "") return;

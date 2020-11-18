@@ -64,7 +64,7 @@
                   <div
                     class="company_item"
                     v-for="(item,index) in focusedComanyList"
-                    :key="item.companyID"
+                    :key="index"
                     @click="companyItemClick(index)"
                   >
                     <span> {{item.name}}</span> <span>{{item.type}}</span> <span>风险总数{{item.riskCount}}</span>
@@ -151,7 +151,7 @@
     >
       <a-row>
         <a-col :span="8">检查点名称 </a-col>
-        <a-col :span="16">{{RSdrawerContent.name}}</a-col>
+        <a-col :span="16">{{RSdrawerContent.companyName}}</a-col>
       </a-row>
       <a-row>
         <a-col :span="8">检查点经纬度 </a-col>
@@ -159,7 +159,7 @@
       </a-row>
       <a-row>
         <a-col :span="8">检查点ID </a-col>
-        <a-col :span="16">{{RSdrawerContent.checkpointId}}</a-col>
+        <a-col :span="16">{{RSdrawerContent.companyId}}</a-col>
       </a-row>
       <a-row>
         <a-col :span="8">RFID </a-col>
@@ -209,7 +209,12 @@
           <a-col :span="16">{{CIdrawerContent.info.riskCount}}</a-col>
         </a-row>
         <p>检查点列表</p>
-        <section>list</section>
+        <section>
+          <p
+            v-for="(item,index) in CIdrawerContent.checkPoints"
+            :key="index"
+          >{{item.checkpointName}}</p>
+        </section>
       </div>
     </a-drawer>
     <a-modal
@@ -235,9 +240,12 @@ const chinaJson = require("../assets/map/china.json");
 const cqJson = require("../assets/map/chongqing.json");
 // console.log(scatterData);
 import { getYongchuanBoundary, GetLocations } from "network/map";
-import { drawDistrictBorder, mapController } from "useModule/useMap";
-import { echartMapController } from "useModule/useEchartsMap";
-import { getCheckPoints } from "network/tempData.js";
+import {
+  drawDistrictBorder,
+  mapController,
+  echartMapController,
+} from "useModule/mapController";
+import { getCheckPoints, getRiskSource, getRisks } from "network/tempData.js";
 import { getWeather } from "network/weather";
 export default {
   // name: "Home",
@@ -262,13 +270,13 @@ export default {
       exitModelVisible: false,
       //风险源 抽屉内容
       RSdrawerContent: {
-        name: "",
         position: [],
         //模拟数据 写死
-        checkpointId: 1273281863665983488,
+        companyId: 1273281863665983488,
         RFID: "A01E3560",
         areaName: "矿山区域",
         companyName: "渝琥石英砂有限公司",
+        checkPoints: [],
       },
       //企业信息展示 抽屉内容
       CIdrawerContent: {
@@ -276,7 +284,7 @@ export default {
         checkPoints: [],
       },
       data: {
-        checkPoints: [],
+        riskSource: [],
       },
     };
   },
@@ -284,7 +292,7 @@ export default {
     //获取 数据
     async getData() {
       //获取检查点数据
-      this.data.checkPoints = getCheckPoints();
+      this.data.riskSource = getRiskSource();
       //获取 天气信息
       const res = await getWeather();
       if (!res.success) return this.$message.error("天气信息获取失败");
@@ -298,35 +306,35 @@ export default {
           position: [105.865745, 29.245634],
           type: "建材",
           riskCount: 200,
-          companyID: 0,
+          companyId: 1245492352970530816,
         },
         {
           name: "渝琥石英砂有限公司",
           position: [105.865745, 29.25634],
           type: "建材",
           riskCount: 200,
-          companyID: 1,
+          companyId: 1245492352970530816,
         },
         {
           name: "渝琥石英砂有限公司",
           position: [105.865745, 29.2634],
           type: "建材",
           riskCount: 200,
-          companyID: 2,
+          companyId: 1245491675644960768,
         },
         {
           name: "渝琥石英砂有限公司",
           position: [105.87745, 29.245634],
           type: "建材",
           riskCount: 200,
-          companyID: 3,
+          companyId: 1245490314215825408,
         },
         {
           name: "渝琥石英砂有限公司",
           position: [105.89745, 29.245634],
           type: "建材",
           riskCount: 200,
-          companyID: 4,
+          companyId: 1245489653562613760,
         },
       ];
       this.focusedComanyList = temp;
@@ -343,23 +351,40 @@ export default {
       this.closeCheckPointDrawer();
       this.mapType = this.mapType === "map" ? "echarts" : "map";
     },
+    //自动刷新风险数数据 建议后期 改成 //TODOwebsocket
+    startRefreshRisk() {
+      // setInterval(() => {
+      //   const risks = getRisks();
+      //   console.log(risks);
+      //   if (risks.length !== 0) {
+      //     this.$message.warn("产生新的风险");
+      //     this.mapController.drawRisk(risks);
+      //   }
+      // }, 1000);
+      const risks = getRisks();
+      console.log(risks);
+      if (risks.length !== 0) {
+        this.$message.warn("产生新的风险");
+        this.mapController.drawRisk(risks);
+      }
+    },
     //初始化 并渲染地图
-    echartsInit() {
+    emapInit() {
       this.echartMap = echarts.init(document.querySelector("#chart"));
       //注册地图
       echarts.registerMap("cq", cqJson);
       echarts.registerMap("china", chinaJson);
       echarts.registerMap("yongchuan", yongchaunJson);
       this.emController = new echartMapController(this.echartMap);
-      this.emController.init(this.data.checkPoints);
+      this.emController.init(this.data.riskSource);
       this.echartsBindEventHandler();
     },
     // echarts 绑定点击事件
     echartsBindEventHandler() {
-      this.emController.bindMakersEventHandler("click", "geo", (params) => {
-        console.log(params);
-        const { name } = params;
-      });
+      // this.emController.bindMakersEventHandler("click", "geo", (params) => {
+      //   console.log(params);
+      //   const { name } = params;
+      // });
       this.emController.bindMakersEventHandler(
         "click",
         "series.scatter",
@@ -368,8 +393,10 @@ export default {
           const { name, value } = params;
           this.RSdrawerContent.name = name;
           this.RSdrawerContent.position = value;
-          this.RSDrawerVisible = true;
-          console.log(params);
+          // this.RSDrawerVisible = true;
+          // console.log(params);
+          this.setMapCenter(value);
+          this.mapType = "map"; //切换到 高德地图
         }
       );
     },
@@ -380,31 +407,34 @@ export default {
       //绑定 点击事件，弹出右侧 抽屉
       this.mapController.bindMakersEventHandler("click", (e) => {
         // console.log(e, this);
-        const { name, index } = e.target.getExtData();
-        const position = e.target.getPosition();
-        // console.log(name, index, position);
-        this.RSdrawerContent.name = name;
+        const { compnayName, companyId } = e.target.getExtData();
+        const position = e.target.getCenter();
+        console.log(companyName, companyId, position);
+        this.RSdrawerContent.companyName = companyName;
         this.RSdrawerContent.position = position;
+        this.RSdrawerContent.checkPoints = this.data.riskSource.find(
+          (item) => item.companyId === companyId
+        ).checkPoints;
         this.RSDrawerVisible = true;
       });
 
       //绑定 mouseover 事件，显示信息窗口
-      this.mapController.bindMakersEventHandler("mouseover", (e) => {
-        const { name, index } = e.target.getExtData();
-        const position = e.target.getPosition();
-        // console.log(name, index, position);
-        //创建信息 窗体
-        const infoWindow = new AMap.InfoWindow({
-          content: `
-          <div class="info_window">
-          <p>${name}</p>
-           <p>${position}</p>
-          </div>
-          `, //传入 dom 对象，或者 html 字符串
-          anchor: "middle-left",
-        });
-        infoWindow.open(this.amap, position);
-      });
+      // this.mapController.bindMakersEventHandler("mouseover", (e) => {
+      //   const { name, index } = e.target.getExtData();
+      //   const position = e.target.getPosition();
+      //   // console.log(name, index, position);
+      //   //创建信息 窗体
+      //   const infoWindow = new AMap.InfoWindow({
+      //     content: `
+      //     <div class="info_window">
+      //     <p>${name}</p>
+      //      <p>${position}</p>
+      //     </div>
+      //     `, //传入 dom 对象，或者 html 字符串
+      //     anchor: "middle-left",
+      //   });
+      //   infoWindow.open(this.amap, position);
+      // });
       //鼠标离开 关闭信息
       this.mapController.bindMakersEventHandler("mouseout", (e) => {
         this.amap.clearInfoWindow(); //清除 信息窗体
@@ -424,11 +454,12 @@ export default {
         title: {
           text: "全区风险源统计",
           left: "center",
-          // textStyle:{
-          //   fontSize:'24px',
-          //   height:'50px',
-          //   fontWeight:'bolder'
-          // }
+          textStyle: {
+            // fontSize:'24px',
+            // height:'50px',
+            // fontWeight:'bolder'
+            color: "#fff",
+          },
         },
         tooltip: {
           trigger: "item",
@@ -438,6 +469,9 @@ export default {
           left: "center",
           top: "20px",
           data: ["type1", "type2", "type3", "type4", "type5"],
+          textStyle: {
+            color: "#fff",
+          },
         },
         series: {
           name: "访问来源",
@@ -453,10 +487,17 @@ export default {
     companyItemClick(index) {
       console.log(index);
       const info = this.focusedComanyList[index];
-      const { position, name } = info;
+      const { position, name, companyId } = info;
       console.log(position, index);
       this.CIdrawerContent.info = info;
+      this.CIdrawerContent.checkPoints = this.data.riskSource.find(
+        (item) => item.companyId == companyId
+      ).checkPoints;
       this.CIDrawerVisible = true;
+      this.setMapCenter(position);
+    },
+    //同时 设置两个地图的中心 并放大地图
+    setMapCenter(position) {
       //高德地图 设置中心位置
       this.amap.setCenter(position);
       this.amap.setZoom(14);
@@ -535,11 +576,14 @@ export default {
     mapInitedHandler() {
       //创建控制器
       const locations = GetLocations();
-      // console.log(this.data.checkPoints);
+      const riskSource = getRiskSource();
+      // console.log(locations);
       this.mapController = new mapController(AMap); //创建 高德地图的控制器
-      this.mapController.init(this.amap, locations, this.data.checkPoints);
+      this.mapController.init(this.amap, locations);
+      this.mapController.drawRiskSource(riskSource);
       //绑定事件
       this.bindMakersEventHandler();
+      this.startRefreshRisk();
     },
   },
   created() {
@@ -548,7 +592,7 @@ export default {
     // this.getWeatherData();
   },
   mounted() {
-    this.echartsInit();
+    this.emapInit();
     // this.echartsBindEventHandler();
     //等页面 加载文笔，指的是  高德地图的script脚本
     document.addEventListener("DOMContentLoaded", () => {
@@ -559,21 +603,33 @@ export default {
 </script>
 
 <style lang="less" scoped>
+//svg 闪烁动画
+@keyframes shinning {
+  from {
+    fill: #d81e06;
+  }
+  to {
+    fill: transparent;
+  }
+}
+
 .home {
   height: 100%;
   overflow-x: hidden;
-  // background:url(../assets/img/bg.jpg);
+  color: #fff; 
+  background: url(../assets/img/bg.jpg);
   /deep/.ant-spin-container {
     height: calc(100vh - 64px - 20px); //spin 组件默认称其 整屏
   }
   .ant-layout {
-    background-color: none;
+    background: none;
   }
   .ant-layout-header .header_wapper {
     height: 100%;
     color: #fff;
     display: flex;
     justify-content: space-around;
+    border: 1px solid #93ebf8;
     .left,
     .right {
       width: 30%;
@@ -590,7 +646,7 @@ export default {
     flex-direction: column;
     justify-content: space-between;
     > section {
-      border: 1px solid black;
+      border: 1px solid #fff; 
     }
     .weather {
       height: 20%;
@@ -664,7 +720,11 @@ export default {
   .map_container {
     height: calc(100% - 40px);
     margin: 0 auto;
-    background-color: #eeeeee;
+    // background-color: #eeeeee;//FIXME
+    border: 1px solid #93ebf8;
+    #gaodemap .amap-layers .amap-markers .amap-marker /deep/ .shinning path {
+      animation: shinning 0.5s linear;//FIXME:无法选中 svg 
+    }
   }
   .tool-bar {
     // border: 1px solid red;
