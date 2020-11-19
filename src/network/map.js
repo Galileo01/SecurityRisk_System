@@ -22,6 +22,7 @@ function calBounds(locations) {
     const AMap = window.AMap;
     for (let i = 0; i < locations.length; i++) {
         locations[i].borders = [];//边界 位置
+        locations[i].bounds=[];
         //查找最大的多边形
         let c = 0;
         let maxIdx = 0;
@@ -36,12 +37,14 @@ function calBounds(locations) {
         //TODO:获取每个区域的边框 和 center
         locations[i].locations.split("|").forEach((locs, idx) => {
             if (locs == "") return;
-            var path = [];
+            const path = [];
+            const bounds=[];//测试
             //TODO:计算
             locs.split(";").forEach(p => {
                 if (p == "") return;
                 var pp = p.split(",");
                 path.push(new AMap.LngLat(pp[0] * 1, pp[1] * 1, true));//转换为经纬度
+                bounds.push([pp[0] * 1, pp[1] * 1]);
             });
 
             if (idx == maxIdx) {
@@ -66,7 +69,7 @@ function calBounds(locations) {
                 locations[i].center = { x: (l + r) / 2, y: (b + t) / 2 };//计算得到 区域的中心
             }
             locations[i].borders.push(path);
-
+            locations[i].bounds.push(...bounds);//测试
         });
     }
     return locations;
@@ -75,6 +78,7 @@ function calBounds(locations) {
 export function GetLocations() {
     //根据 locations 提前计算边界
     const calculated = calBounds(locations);
+    console.log(calculated);
     return calculated;
 }
 

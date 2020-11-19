@@ -285,6 +285,7 @@ export default {
       },
       data: {
         riskSource: [],
+        risks: [],
       },
     };
   },
@@ -366,8 +367,48 @@ export default {
       if (risks.length !== 0) {
         this.$message.warn("产生新的风险");
         this.mapController.drawRisk(risks);
+        const pathElements = document.querySelectorAll(".shinning");
+        console.log(pathElements);
+        //由于 style scoped 属性后 vue-loader 会给style 内的选择器加一个字符串，全部办成属性选择器，@keyframe 名称也会改变
+        pathElements.forEach((ele) => {
+          const checkpointid = ele.dataset.checkpointid;
+          const risk = risks.find((item) => item.checkpointId == checkpointid);
+
+          console.log(checkpointid);
+          const timer = setInterval(() => {
+            const pre = ele.style.fill;
+            ele.style.fill = pre === "none" ? "#d81e06" : "none";
+            this.data.risks.push();
+          }, 1000);
+          if (risk.timers) {
+            risk.timers.push(timer);
+          } else risk.timers = [timer];
+          this.data.risks.push(risk);//保存 到Vue 实例，
+        });
+        console.log(risks);
+
+        // setTimeout(() => {
+        //   this.removeRisk();
+        // }, 3000);
       }
     },
+    //风险解决 取消 动态显示
+    removeRisk() {
+      const solved = this.data.risks;
+
+      // this.mapController.removeRisk(solved);
+      solved.forEach((item) => {
+        const { timers, checkpointId } = this.data.risks.find(
+          (i) => i.checkpointId == item.checkpointId
+        );
+        console.log(timers, checkpointId);
+        this.$message.success(`id 为 ${checkpointId}的检查点风险解决`);
+        timers.forEach((timer) => {
+          clearInterval(timer);
+        });
+      });
+    },
+
     //初始化 并渲染地图
     emapInit() {
       this.echartMap = echarts.init(document.querySelector("#chart"));
@@ -599,24 +640,26 @@ export default {
       this.mapInit();
     });
   },
+  destroyed() {
+    //清除所有定时器
+    this.risks.forEach((item) => {
+      const timers = item.timers;
+      timers.forEach((timer) => {
+        clearInterval(timer);
+      });
+    });
+  },
 };
 </script>
 
 <style lang="less" scoped>
 //svg 闪烁动画
-@keyframes shinning {
-  from {
-    fill: #d81e06;
-  }
-  to {
-    fill: transparent;
-  }
-}
 
 .home {
   height: 100%;
   overflow-x: hidden;
-  color: #fff; 
+
+  color: #fff;
   background: url(../assets/img/bg.jpg);
   /deep/.ant-spin-container {
     height: calc(100vh - 64px - 20px); //spin 组件默认称其 整屏
@@ -646,7 +689,7 @@ export default {
     flex-direction: column;
     justify-content: space-between;
     > section {
-      border: 1px solid #fff; 
+      border: 1px solid #fff;
     }
     .weather {
       height: 20%;
@@ -684,12 +727,14 @@ export default {
     }
     .company_list {
       height: 32%;
+
       // padding: 20px;
       // overflow-y: scroll;
       overflow: hidden;
       h3 {
         text-align: center;
         margin-bottom: 0;
+        color: #fff;
       }
       .list {
         overflow-y: scroll;
@@ -699,7 +744,8 @@ export default {
           display: flex;
           justify-content: space-around;
           align-items: center;
-          box-shadow: 0 2px 6px 0 rgba(114, 124, 245, 0.5);
+          // box-shadow: 0 2px 6px 0 rgba(114, 124, 245, 0.5);
+          box-shadow: 0 2px 6px 0 #93ebf8;
           border-radius: 5px;
           height: 22%;
           width: 90%;
@@ -709,6 +755,7 @@ export default {
         .company_item:hover {
           background-color: #eeeeee;
           box-shadow: none;
+          color: black;
         }
       }
     }
@@ -722,9 +769,6 @@ export default {
     margin: 0 auto;
     // background-color: #eeeeee;//FIXME
     border: 1px solid #93ebf8;
-    #gaodemap .amap-layers .amap-markers .amap-marker /deep/ .shinning path {
-      animation: shinning 0.5s linear;//FIXME:无法选中 svg 
-    }
   }
   .tool-bar {
     // border: 1px solid red;

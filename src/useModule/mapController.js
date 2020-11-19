@@ -79,6 +79,9 @@ export class echartMapController {
                 //     areaColor: "#2a333d",
                 //   },
                 // },
+                textStyle: {
+                    color: '#fff'
+                },
                 label: {
                     show: true,
                 },
@@ -168,8 +171,8 @@ export class mapController {
     mapIns = null;//地图实例
     locations = [];//每个 区域内的所有点的完整 经纬度
     AMap = null;
-    riskMarkers = [];//地图上 风险源
-    riskIcon = '<svg t="1605525573238" class="risk shinning" id="shinning" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="11425" width="24" height="32"><path d="M512.036571 950.857143c-70.546286 0-365.714286-276.589714-365.714285-548.571429a365.714286 365.714286 0 0 1 731.428571 0c0 271.981714-295.168 548.571429-365.714286 548.571429z" fill="#d81e06" p-id="11426"></path><path d="M512.036571 1024c-77.604571 0-402.285714-309.796571-402.285714-614.4a402.285714 402.285714 0 1 1 804.571429 0c0 304.603429-324.681143 614.4-402.285715 614.4z m0-950.857143a329.142857 329.142857 0 0 0-329.142857 329.142857c0 229.778286 243.346286 512 329.142857 512 81.225143 0 329.142857-279.954286 329.142858-512a329.142857 329.142857 0 0 0-329.142858-329.142857z m0 438.857143a109.714286 109.714286 0 1 1 109.714286-109.714286 109.714286 109.714286 0 0 1-109.714286 109.714286z" fill="#d81e06" p-id="11427"></path></svg>';
+    RSMarkers = [];//地图上 风险源
+    riskMarkers = [];//动态的风险makers
     typeColor = {
         type1: "#d81e06",
         type2: "#f4ea2a",
@@ -185,11 +188,15 @@ export class mapController {
         // console.log(mapIns, locations);
         this.mapIns = mapIns;
         this.locations = locations;
-        this.drawBorder();
+        this.drawGeneralBorder();
+        this.drawTownBorder();
     }
-
+    //使用checkpointId 返回一个 带有数据的checkpointId
+    getRiskIcon(checkpointId) {
+        return `<svg t="1605525573238"  viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="11425" width="24" height="32"><path data-checkpointId="${checkpointId}" class="shinning" style="transition: fill 0.5s ease-in-out;" d="M512.036571 950.857143c-70.546286 0-365.714286-276.589714-365.714285-548.571429a365.714286 365.714286 0 0 1 731.428571 0c0 271.981714-295.168 548.571429-365.714286 548.571429z" fill="#d81e06" p-id="11426"></path><path class="shinning" data-checkpointId="${checkpointId}" style="transition: fill 0.5s ease-in-out;" d="M512.036571 1024c-77.604571 0-402.285714-309.796571-402.285714-614.4a402.285714 402.285714 0 1 1 804.571429 0c0 304.603429-324.681143 614.4-402.285715 614.4z m0-950.857143a329.142857 329.142857 0 0 0-329.142857 329.142857c0 229.778286 243.346286 512 329.142857 512 81.225143 0 329.142857-279.954286 329.142858-512a329.142857 329.142857 0 0 0-329.142858-329.142857z m0 438.857143a109.714286 109.714286 0 1 1 109.714286-109.714286 109.714286 109.714286 0 0 1-109.714286 109.714286z" fill="#d81e06" p-id="11427"></path></svg>`
+    }
     //创建 polygon 绘制 永川区的便捷
-    drawBorder() {
+    drawGeneralBorder() {
         const AMap = this.AMap;
         const locations = this.locations;
         const outer = [
@@ -223,6 +230,37 @@ export class mapController {
         polygon.setPath(pathArray);
         this.mapIns.add(polygon);
     }
+    //绘制乡镇的 轮廓
+    drawTownBorder() {
+        const AMap = this.AMap;
+        const len = this.locations.length;
+        const borderLayer = new AMap.VectorLayer({
+            zIndex: 999
+        });
+        // console.log(polygonLayer.add);
+        this.mapIns.add(borderLayer)
+        const locations = this.locations;
+        const polylines = []
+
+        for (let i = 1; i < len; i++) {
+            // console.log(locations[i]);
+            //一段一段的 绘制边界
+            locations[i].borders.forEach(path => {
+                //创建折线
+                const polyline = new AMap.Polyline({
+                    strokeWeight: 1,
+                    path,
+                    fillColor: 'transparent',
+                    // fillOpacity: 0.2,
+                    strokeColor: 'black',//#0000ff
+                    extData: { towner: locations[i].towner }
+                });
+                polylines.push(polyline)
+            })
+        }
+        // console.log(polygonLayer.add);
+        borderLayer.add(polylines);
+    }
     //绘制 风险源
     drawRiskSource(riskSource) {
         // console.log(riskSource);
@@ -255,7 +293,7 @@ export class mapController {
             }
         }
         markers.length > 0 && this.mapIns.add(markers);
-        this.riskMarkers = markers;
+        this.RSMarkers = markers;
     }
     //动态 绘制风险
     drawRisk(risks) {
@@ -265,7 +303,7 @@ export class mapController {
             const { checkpointName, checkpointId, companyId, position } = item;
             const marker = new AMap.Marker({
                 position: position,// new AMap.LngLat(risk.lng, risk.lat),
-                content: this.riskIcon,
+                content: this.getRiskIcon(checkpointId),
                 //   // 以 icon 的 [center bottom] 为原点
                 offset: new AMap.Pixel(-12, -32),//设置 偏移 移动到底端
                 extData: {//额外的属性 用于 marker 的点击事件
@@ -276,14 +314,28 @@ export class mapController {
             markers.push(marker)
         })
         this.mapIns.add(markers);
-
+        this.riskMarkers.push(...markers);
     }
-    removeRisk() {
-
+    //移除动态的 风险
+    removeRisk(solved) {
+        console.log(this.riskMarkers);
+        solved.forEach((item) => {
+            //FIXME:相等却不返回
+            // const index = this.riskMarkers.findIndex((maker) => {
+            //     const { companyId } = maker.getExtData();
+            //     console.log(companyId === item.companyId);
+            //     return companyId === item.companyId;
+            // }
+            // );
+            const index = this.riskMarkers.findIndex((marker) => marker.getExtData().companyId === item.companyId);
+            console.log(index);
+            this.riskMarkers[index].remove();//移除自身
+            this.riskMarkers.splice(index, 1);//从列表中移除
+        });
     }
     //绑定 marker点击事件
     bindMakersEventHandler(eventType, handler) {
-        this.riskMarkers.forEach((maker) => {
+        this.RSMarkers.forEach((maker) => {
             maker.on(eventType, handler);
         })
     }

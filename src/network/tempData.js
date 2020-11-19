@@ -1527,3 +1527,7 @@ export function getRisks() {
     // else return riskSource[i].checkPoints.slice(0, 2);
     return riskSource[i].checkPoints.slice(0, 2);
 }
+
+function getTownBorder(){
+    
+}
