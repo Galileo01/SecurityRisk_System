@@ -1,0 +1,145 @@
+@import url(./normalize.css);
+.page {
+    height: 100%;
+    --test: #fff;
+}
+
+.center {
+    display: grid;
+    place-items: center;
+}
+
+p {
+    margin-block-start: 0px;
+    margin-block-end: 0px;
+    margin-bottom: 0 !important;
+}
+
+//单行文字溢出
+.text-overflow-one {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+//多行文字溢出显示 省略号（只适用于-webkit 内核）    需要自行指定 -webkit-line-clamp 属性
+.text-overflow-more {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    // -webkit-line-clamp: 2;
+    overflow: hidden;
+    height: 100%;
+}
+.ant-message .ant-message-notice-content {
+    color: #fff;
+    background-color: #171b23;
+}
+
+/*html 元素上定义 变量*/
+
+:root {
+    --window-color: #19191a; /* 窗体的 通用 背景颜色*/
+}
+.ant-modal-root {
+    background-color: transparent;
+    background: transparent;
+    .ant-modal-content {
+        position: relative;
+        background: transparent;
+        // background-image: url(../../assets/img/window/left1.png);
+        border: none; //隐藏 border
+        .ant-modal-close .ant-modal-close-x {
+            line-height: 30px;
+        }
+        .ant-modal-header {
+            position: relative;
+            z-index: 3;
+            background: none;
+            border: none;
+            padding: 0 20px;
+            .ant-modal-title {
+                text-align: center;
+                font-size: 18px;
+                font-weight: 600;
+                line-height: 30px;
+            }
+        }
+        .ant-modal-body {
+            padding: 10px 15px;
+        }
+        .ant-modal-footer {
+            border: none;
+            padding: 0px 16px 3px 16px;
+            > div {
+                //撑开 footer 中按钮的容器高度
+                margin-bottom: 30px;
+            }
+        }
+
+        .ant-form-item {
+            .ant-form-item-label > label {
+                color: #fff !important;
+            }
+            color: #fff !important;
+        }
+    }
+}
+.ant-select-dropdown {
+    //调整样式 和 整个页面的主题一致
+    background-color: var(--window-color) !important;
+    .ant-select-dropdown-menu-item {
+        background-color: none;
+        color: #fff;
+    }
+    .ant-select-dropdown-menu-item:hover {
+        background-color: #fff;
+        color: var(--window-color);
+    }
+    .ant-select-dropdown-menu-item-selected,
+    .ant-select-dropdown-menu-item-active {
+        background-color: #93ebf8;
+        color: var(--window-color) !important;
+    }
+}
+.ant-calendar-picker-container {
+    background-color: var(--window-color) !important;
+    color: #fff !important;
+}
+.ant-calendar {
+    background-color: #19191a !important;
+    color: #bfbfbf;
+    .ant-calendar-ok-btn,
+    .ant-calendar-time-picker-btn-disabled {
+        background-color: transparent;
+        color: #bfbfbf !important;
+    }
+    .ant-calendar-input {
+        background-color: #19191a !important;
+        color: #bfbfbf !important;
+    }
+    .ant-calendar-date {
+        color: #bfbfbf;
+    }
+    .ant-calendar-date:hover {
+        color: #bfbfbf;
+    }
+    .ant-calendar-header .ant-calendar-century-select,
+    .ant-calendar-header .ant-calendar-decade-select,
+    .ant-calendar-header .ant-calendar-year-select,
+    .ant-calendar-header .ant-calendar-month-select {
+        color: #bfbfbf;
+    }
+    .ant-calendar-range .ant-calendar-in-range-cell::before {
+        color: #19191a !important;
+    }
+}
+
+.ant-calendar-month-panel,
+.ant-calendar-year-panel {
+    background-color: #19191a !important;
+    a.ant-calendar-month-panel-month,
+    a.ant-calendar-year-panel-year,
+    .ant-calendar-year-panel-decade-select-content,
+    .ant-calendar-month-panel-year-select-content {
+        color: #bfbfbf;
+    }
+}

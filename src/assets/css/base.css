@@ -1,0 +1,137 @@
+@import url(normalize.css);
+.page {
+  height: 100%;
+  --test: #fff;
+}
+.center {
+  display: grid;
+  place-items: center;
+}
+p {
+  margin-block-start: 0px;
+  margin-block-end: 0px;
+  margin-bottom: 0 !important;
+}
+.text-overflow-one {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.text-overflow-more {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 100%;
+}
+.ant-message .ant-message-notice-content {
+  color: #fff;
+  background-color: #171b23;
+}
+/*html 元素上定义 变量*/
+:root {
+  --window-color: #19191a;
+  /* 窗体的 通用 背景颜色*/
+}
+.ant-modal-root {
+  background-color: transparent;
+  background: transparent;
+}
+.ant-modal-root .ant-modal-content {
+  position: relative;
+  background: transparent;
+  border: none;
+}
+.ant-modal-root .ant-modal-content .ant-modal-close .ant-modal-close-x {
+  line-height: 30px;
+}
+.ant-modal-root .ant-modal-content .ant-modal-header {
+  position: relative;
+  z-index: 3;
+  background: none;
+  border: none;
+  padding: 0 20px;
+}
+.ant-modal-root .ant-modal-content .ant-modal-header .ant-modal-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 30px;
+}
+.ant-modal-root .ant-modal-content .ant-modal-body {
+  padding: 10px 15px;
+}
+.ant-modal-root .ant-modal-content .ant-modal-footer {
+  border: none;
+  padding: 0px 16px 3px 16px;
+}
+.ant-modal-root .ant-modal-content .ant-modal-footer > div {
+  margin-bottom: 30px;
+}
+.ant-modal-root .ant-modal-content .ant-form-item {
+  color: #fff !important;
+}
+.ant-modal-root .ant-modal-content .ant-form-item .ant-form-item-label > label {
+  color: #fff !important;
+}
+.ant-select-dropdown {
+  background-color: var(--window-color) !important;
+}
+.ant-select-dropdown .ant-select-dropdown-menu-item {
+  background-color: none;
+  color: #fff;
+}
+.ant-select-dropdown .ant-select-dropdown-menu-item:hover {
+  background-color: #fff;
+  color: var(--window-color);
+}
+.ant-select-dropdown .ant-select-dropdown-menu-item-selected,
+.ant-select-dropdown .ant-select-dropdown-menu-item-active {
+  background-color: #93ebf8;
+  color: var(--window-color) !important;
+}
+.ant-calendar-picker-container {
+  background-color: var(--window-color) !important;
+  color: #fff !important;
+}
+.ant-calendar {
+  background-color: #19191a !important;
+  color: #bfbfbf;
+}
+.ant-calendar .ant-calendar-ok-btn,
+.ant-calendar .ant-calendar-time-picker-btn-disabled {
+  background-color: transparent;
+  color: #bfbfbf !important;
+}
+.ant-calendar .ant-calendar-input {
+  background-color: #19191a !important;
+  color: #bfbfbf !important;
+}
+.ant-calendar .ant-calendar-date {
+  color: #bfbfbf;
+}
+.ant-calendar .ant-calendar-date:hover {
+  color: #bfbfbf;
+}
+.ant-calendar .ant-calendar-header .ant-calendar-century-select,
+.ant-calendar .ant-calendar-header .ant-calendar-decade-select,
+.ant-calendar .ant-calendar-header .ant-calendar-year-select,
+.ant-calendar .ant-calendar-header .ant-calendar-month-select {
+  color: #bfbfbf;
+}
+.ant-calendar .ant-calendar-range .ant-calendar-in-range-cell::before {
+  color: #19191a !important;
+}
+.ant-calendar-month-panel,
+.ant-calendar-year-panel {
+  background-color: #19191a !important;
+}
+.ant-calendar-month-panel a.ant-calendar-month-panel-month,
+.ant-calendar-year-panel a.ant-calendar-month-panel-month,
+.ant-calendar-month-panel a.ant-calendar-year-panel-year,
+.ant-calendar-year-panel a.ant-calendar-year-panel-year,
+.ant-calendar-month-panel .ant-calendar-year-panel-decade-select-content,
+.ant-calendar-year-panel .ant-calendar-year-panel-decade-select-content,
+.ant-calendar-month-panel .ant-calendar-month-panel-year-select-content,
+.ant-calendar-year-panel .ant-calendar-month-panel-year-select-content {
+  color: #bfbfbf;
+}
