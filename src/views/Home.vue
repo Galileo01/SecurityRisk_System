@@ -141,39 +141,39 @@
     </a-layout>
 
     <!--检查点抽屉-->
-    <a-drawer
+    <!-- <a-drawer
       title="检查点信息"
       placement="right"
-      :visible="RSDrawerVisible"
+      :visible="RSHoverVisible"
       :after-visible-change="afterVisibleChange"
       @close="closeCheckPointDrawer"
       width="22vw"
     >
       <a-row>
         <a-col :span="8">检查点名称 </a-col>
-        <a-col :span="16">{{RSdrawerContent.companyName}}</a-col>
+        <a-col :span="16">{{RSHoverContent.companyName}}</a-col>
       </a-row>
       <a-row>
         <a-col :span="8">检查点经纬度 </a-col>
-        <a-col :span="16">{{RSdrawerContent.position}}</a-col>
+        <a-col :span="16">{{RSHoverContent.position}}</a-col>
       </a-row>
       <a-row>
         <a-col :span="8">检查点ID </a-col>
-        <a-col :span="16">{{RSdrawerContent.companyId}}</a-col>
+        <a-col :span="16">{{RSHoverContent.companyId}}</a-col>
       </a-row>
       <a-row>
         <a-col :span="8">RFID </a-col>
-        <a-col :span="16">{{RSdrawerContent.RFID}}</a-col>
+        <a-col :span="16">{{RSHoverContent.RFID}}</a-col>
       </a-row>
       <a-row>
         <a-col :span="8">所属区域 </a-col>
-        <a-col :span="16">{{RSdrawerContent.areaName}}</a-col>
+        <a-col :span="16">{{RSHoverContent.areaName}}</a-col>
       </a-row>
       <a-row>
         <a-col :span="8">所属企业 </a-col>
-        <a-col :span="16">{{RSdrawerContent.companyName}}</a-col>
+        <a-col :span="16">{{RSHoverContent.companyName}}</a-col>
       </a-row>
-    </a-drawer>
+    </a-drawer> -->
     <!--个人中心 抽屉-->
     <a-drawer
       title="个人中心"
@@ -217,6 +217,7 @@
         </section>
       </div>
     </a-drawer>
+    <!--退出model -->
     <a-modal
       :visible="exitModelVisible"
       title="安全退出"
@@ -230,6 +231,35 @@
         banner
       />
     </a-modal>
+    <!---风险源 hover-->
+    <!--MARK: hover效果的暂时版本-->
+    <div
+      class="risk_hover"
+      ref="risk_hover"
+      v-show="RSHoverVisible"
+    >
+
+      <div class="triangle"></div>
+      <h3>风险详情</h3>
+      <a-row>
+        <a-col :span="8">企业名称 </a-col>
+        <a-col :span="16">{{RSHoverContent.companyName}}</a-col>
+      </a-row>
+      <a-row>
+        <a-col :span="8">企业经纬度度 </a-col>
+        <a-col :span="16">{{RSHoverContent.position[0]}},{{RSHoverContent.position[1]}}</a-col>
+      </a-row>
+      <p>未处理的隐患数据</p>
+      <div>
+        <p
+          v-for="(item,index) in RSHoverContent.checkPoints"
+          :key="index"
+          class="checkpoint_item"
+        >
+          检查点名称:{{item.checkpointName}}
+        </p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -239,7 +269,16 @@ const yongchaunJson = require("../assets/map/yongchuan.json"); //导入永川区
 const chinaJson = require("../assets/map/china.json");
 const cqJson = require("../assets/map/chongqing.json");
 // console.log(scatterData);
-import { getYongchuanBoundary, GetLocations } from "network/map";
+const YC = require("../assets/map/YC.json");
+// const nanda = require("../assets/map/nanda2.json");
+const zhongshan = require("../assets/map/zhongshan.json");
+const weixinhu = require("../assets/map/weixinhu.json");
+import {
+  getYongchuanBoundary,
+  GetLocations,
+  getGeoJson,
+  getGeoJson1,
+} from "network/map";
 import {
   drawDistrictBorder,
   mapController,
@@ -247,6 +286,10 @@ import {
 } from "useModule/mapController";
 import { getCheckPoints, getRiskSource, getRisks } from "network/tempData.js";
 import { getWeather } from "network/weather";
+import { throttlen, debounce } from "useModule/utils";
+
+const general = getGeoJson();
+console.log(general);
 export default {
   // name: "Home",
   data() {
@@ -261,7 +304,7 @@ export default {
       weatherData: null,
       focusedComanyList: [],
       //风险源 抽屉
-      RSDrawerVisible: false,
+      RSHoverVisible: false,
       //用户中心抽屉
       userDrawerVisible: false,
       //企业信息 抽屉
@@ -269,7 +312,7 @@ export default {
       //退出弹框
       exitModelVisible: false,
       //风险源 抽屉内容
-      RSdrawerContent: {
+      RSHoverContent: {
         position: [],
         //模拟数据 写死
         companyId: 1273281863665983488,
@@ -277,6 +320,10 @@ export default {
         areaName: "矿山区域",
         companyName: "渝琥石英砂有限公司",
         checkPoints: [],
+      },
+      RSHover: {
+        top: 0,
+        left: 100,
       },
       //企业信息展示 抽屉内容
       CIdrawerContent: {
@@ -288,6 +335,15 @@ export default {
         risks: [],
       },
     };
+  },
+  computed: {
+    //动态计算 houver 弹出框的高度
+    hoverHeight() {
+      const clientHeight = document.body.clientHeight; //获取页面高度
+      const height = 103 + this.RSHoverContent.checkPoints.length * 30 + "px";
+      console.log(height);
+      return height;
+    },
   },
   methods: {
     //获取 数据
@@ -367,6 +423,9 @@ export default {
       if (risks.length !== 0) {
         this.$message.warn("产生新的风险");
         this.mapController.drawRisk(risks);
+        this.emController.drawRisk(risks);
+
+        //添加闪烁
         const pathElements = document.querySelectorAll(".shinning");
         console.log(pathElements);
         //由于 style scoped 属性后 vue-loader 会给style 内的选择器加一个字符串，全部办成属性选择器，@keyframe 名称也会改变
@@ -380,10 +439,11 @@ export default {
             ele.style.fill = pre === "none" ? "#d81e06" : "none";
             this.data.risks.push();
           }, 1000);
+
           if (risk.timers) {
             risk.timers.push(timer);
           } else risk.timers = [timer];
-          this.data.risks.push(risk);//保存 到Vue 实例，
+          this.data.risks.push(risk); //保存 到Vue 实例，
         });
         console.log(risks);
 
@@ -416,6 +476,11 @@ export default {
       echarts.registerMap("cq", cqJson);
       echarts.registerMap("china", chinaJson);
       echarts.registerMap("yongchuan", yongchaunJson);
+      echarts.registerMap("yc", general);
+      echarts.registerMap("YC", YC);
+      // echarts.registerMap("nanda", nanda);
+      echarts.registerMap("zhongshan", zhongshan);
+      echarts.registerMap("weixinhu", weixinhu);
       this.emController = new echartMapController(this.echartMap);
       this.emController.init(this.data.riskSource);
       this.echartsBindEventHandler();
@@ -428,13 +493,13 @@ export default {
       // });
       this.emController.bindMakersEventHandler(
         "click",
-        "series.scatter",
+        "series.effectScatter",
         (params) => {
           console.log("click in scatter", params);
           const { name, value } = params;
-          this.RSdrawerContent.name = name;
-          this.RSdrawerContent.position = value;
-          // this.RSDrawerVisible = true;
+          this.RSHoverContent.name = name;
+          this.RSHoverContent.position = value;
+          // this.RSHoverVisible = true;
           // console.log(params);
           this.setMapCenter(value);
           this.mapType = "map"; //切换到 高德地图
@@ -445,41 +510,100 @@ export default {
     bindMakersEventHandler() {
       const AMap = window.AMap;
       //高德地图 部分
-      //绑定 点击事件，弹出右侧 抽屉
-      this.mapController.bindMakersEventHandler("click", (e) => {
-        // console.log(e, this);
+      // //绑定 点击事件，弹出右侧 抽屉
+      // this.mapController.bindMakersEventHandler("click", (e) => {
+      //   // console.log(e, this);
+      //   const { compnayName, companyId } = e.target.getExtData();
+      //   const position = e.target.getCenter();
+      //   console.log(companyName, companyId, position);
+      //   this.RSHoverContent.companyName = companyName;
+      //   this.RSHoverContent.position = position;
+      //   this.RSHoverContent.checkPoints = this.data.riskSource.find(
+      //     (item) => item.companyId === companyId
+      //   ).checkPoints;
+      //   this.RSHoverVisible = true;
+      // });
+      let trigger = "none"; //marker none content
+      //风险源 houver 处理函数 ，箭头函数
+      const mouseoverHandler = (e) => {
+        // console.log('mouseover',trigger);
+        // if (trigger !== "none") return;
+        trigger = "marker";
         const { compnayName, companyId } = e.target.getExtData();
         const position = e.target.getCenter();
-        console.log(companyName, companyId, position);
-        this.RSdrawerContent.companyName = companyName;
-        this.RSdrawerContent.position = position;
-        this.RSdrawerContent.checkPoints = this.data.riskSource.find(
-          (item) => item.companyId === companyId
+        //手动位移
+        // const { clientX, clientY } = e.originEvent;
+        // // console.log(clientX,clientY,e);
+        // this.RSHover.top = clientY - 5;
+        // this.RSHover.left = clientX + 10;
+        console.log(compnayName, companyId, position);
+        this.RSHoverContent.checkPoints = this.data.riskSource.find(
+          (item) => item.companyId == companyId
         ).checkPoints;
-        this.RSDrawerVisible = true;
-      });
-
-      //绑定 mouseover 事件，显示信息窗口
-      // this.mapController.bindMakersEventHandler("mouseover", (e) => {
-      //   const { name, index } = e.target.getExtData();
-      //   const position = e.target.getPosition();
-      //   // console.log(name, index, position);
-      //   //创建信息 窗体
-      //   const infoWindow = new AMap.InfoWindow({
-      //     content: `
-      //     <div class="info_window">
-      //     <p>${name}</p>
-      //      <p>${position}</p>
-      //     </div>
-      //     `, //传入 dom 对象，或者 html 字符串
-      //     anchor: "middle-left",
-      //   });
-      //   infoWindow.open(this.amap, position);
-      // });
-      //鼠标离开 关闭信息
-      this.mapController.bindMakersEventHandler("mouseout", (e) => {
+        this.RSHoverContent.position = [position.lng, position.lat];
+        this.RSHoverVisible = true;
+        //等待 弹出框加载完毕
+        this.$nextTick(() => {
+          //创建信息 窗体
+          const infoWindow = new AMap.InfoWindow({
+            isCustom: true,
+            content: this.$refs.risk_hover, //传入 dom 对象
+            // anchor: "middle-left",
+            // anchor: "bottom-left",
+            anchor: "top-left",
+            offset: new AMap.Pixel(10, -5),
+          });
+          infoWindow.open(this.amap, [position.lng, position.lat]);
+        });
+        // this.exitModelVisible=true;
+      };
+      //mouseout事件处理函数
+      const mouseoutHandler = () => {
+        // this.RSHoverVisible = false;
+        //  console.log("mouseout",trigger);
+        // if (trigger !== "marker") return;
         this.amap.clearInfoWindow(); //清除 信息窗体
+        trigger = "none";
+      };
+      //绑定 mouseover 事件，显示信息窗口
+      this.mapController.bindMakersEventHandler(
+        "mouseover",
+        debounce(mouseoverHandler, 200) //绑定节流函数
+      );
+      //绑定 mouseout 事件处理函数  使用防抖，在一段事件之后触发
+      this.mapController.bindMakersEventHandler(
+        "mouseout",
+        debounce(mouseoutHandler, 200) //绑定节流函数
+      );
+      // const mapmoveHandler = () => {
+      //   console.log("mapmove");
+      // };
+      // //绑定mapmove 事件
+
+      // this.mapController.bindMapEventHandler("mapmove", mapmoveHandler);
+      this.$refs.risk_hover.addEventListener("mouseover", () => {
+        console.log("hover in ", trigger);
+        trigger = "content";
+        this.mapController.removeMakersEventHandler("mouseout"); //当鼠标 悬浮在内容中清除
+        this.RSHoverVisible = true;
       });
+      this.$refs.risk_hover.addEventListener("mouseleave", () => {
+        console.log("leave hover in ", trigger);
+        trigger = "none";
+        // this.$refs.risk_hover.removeEventListener("mouseentter");
+        this.RSHoverVisible = false;
+        //重新绑定 marker 的mouseout 事件
+        this.mapController.bindMakersEventHandler(
+          "mouseout",
+          debounce(mouseoutHandler, 200) //绑定节流函数
+        );
+      });
+      //鼠标离开 之后一段时间才 关闭信息窗体
+      // this.mapController.bindMakersEventHandler("mouseout", (e) => {
+      //   setTimeout(() => {
+      //     this.amap.clearInfoWindow(); //清除 信息窗体
+      //   }, 500);
+      // });
     },
     //绘制 风险源 统计饼图
     drawRiskSourcePie() {
@@ -553,7 +677,7 @@ export default {
     //两个 地图同时设置 中心位置
     //关闭 检查点 信息抽屉
     closeCheckPointDrawer() {
-      this.RSDrawerVisible = false;
+      this.RSHoverVisible = false;
     },
     //关闭 个人中心信息抽屉
     closeUserDrawer() {
@@ -843,6 +967,38 @@ export default {
       right: 0;
       top: 50%;
       transform: translateY(-50%);
+    }
+  }
+  .risk_hover {
+    box-shadow: 0 2px 6px 0 rgba(114, 124, 245, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+    font-size: 13px;
+    // position: absolute;
+    // top: 50px;
+    // left: 100px;
+    color: black;
+    width: 17vw;
+    // overflow: hidden;
+    transition: height cubic-bezier(0.075, 0.82, 0.165, 1) 0.3s;
+    margin-bottom: 5px;
+    .triangle {
+      width: 0;
+      height: 0;
+      border: 10px solid;
+      border-color: transparent #fff transparent transparent;
+      position: absolute;
+      top: 5px;
+      left: -20px;
+    }
+    .checkpoint_item {
+      cursor: pointer;
+      line-height: 30px;
+    }
+    p {
+      margin-block-start: 0px;
+      margin-block-end: 0px;
     }
   }
 }

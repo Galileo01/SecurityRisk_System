@@ -1,5 +1,5 @@
 //处于风险源数据 用于echarts 的渲染 计算+分类
-function compute(riskSource) {
+function computeRiskSource(riskSource) {
     const computed = {
         type1: [],
         type2: [],
@@ -19,6 +19,21 @@ function compute(riskSource) {
     })
     return computed;
 }
+
+//加工 风险  用于echarts scatter 的绘制
+function computeRisk(risks) {
+    const computed = [];
+    risks.forEach(item => {
+        const { checkpointName, checkpointId, companyId, position } = item;
+        computed.push({
+            checkpointId,
+            companyId,
+            name: checkpointName,
+            value: [position[0], position[1], 300]
+        })
+    })
+    return computed;
+}
 //echart 地图 控制器
 export class echartMapController {
     echartsIns = null;//实例
@@ -31,7 +46,7 @@ export class echartMapController {
     //绘制风险源
     drawRiskSource(riskSource) {
         //公共是属性 的抽取
-        const computed = compute(riskSource);
+        const computed = computeRiskSource(riskSource);
         const scatterProperyt = {
             symbolSize: function (val) {
                 return val[2] / 10;
@@ -64,7 +79,7 @@ export class echartMapController {
             // },
             color: ["#d81e06", "#f4ea2a", "#1afa29", "#1296db"],
             geo: {
-                map: "yongchuan",
+                map: "yc",
                 roam: true,
                 zoom: 1.3,
                 // itemStyle: {
@@ -79,11 +94,10 @@ export class echartMapController {
                 //     areaColor: "#2a333d",
                 //   },
                 // },
-                textStyle: {
-                    color: '#fff'
-                },
+
                 label: {
                     show: true,
+                    textStyle: { color: "#fff" }
                 },
 
                 itemStyle: {
@@ -112,51 +126,101 @@ export class echartMapController {
                         shadowOffsetY: 2,
                         shadowBlur: 10,
                     },
+                    //高亮状态下的 样式
                     emphasis: {
                         areaColor: "#389BB7",
-                        borderWidth: 0,
+                        borderWidth: 2,
                     },
                 },
             },
             //   backgroundColor: "transparent", // 图表背景色
             //模拟数据
-            series: [
-                {
-                    name: "type1",
-                    type: "scatter",
-                    // symbol: "pin",
-                    coordinateSystem: "geo",
-                    data: computed.type1,
-                    ...scatterProperyt,
-                },
-                {
-                    name: "type2",
-                    type: "scatter",
-                    // symbol: "pin",
-                    coordinateSystem: "geo",
-                    data: computed.type2,
-                    ...scatterProperyt,
-                },
-                {
-                    name: "type3",
-                    type: "scatter",
-                    // symbol: "pin",
-                    coordinateSystem: "geo",
-                    data: computed.type3,
-                    ...scatterProperyt,
-                },
-                {
-                    name: "type4",
-                    type: "scatter",
-                    // symbol: "pin",
-                    coordinateSystem: "geo",
-                    data: computed.type4,
-                    ...scatterProperyt,
-                },
-            ],
+            // series: [
+            //     {
+            //         name: "type1",
+            //         type: "scatter",
+            //         // symbol: "pin",
+            //         coordinateSystem: "geo",
+            //         data: computed.type1,
+            //         ...scatterProperyt,
+            //     },
+            //     {
+            //         name: "type2",
+            //         type: "scatter",
+            //         // symbol: "pin",
+            //         coordinateSystem: "geo",
+            //         data: computed.type2,
+            //         ...scatterProperyt,
+            //     },
+            //     {
+            //         name: "type3",
+            //         type: "scatter",
+            //         // symbol: "pin",
+            //         coordinateSystem: "geo",
+            //         data: computed.type3,
+            //         ...scatterProperyt,
+            //     },
+            //     {
+            //         name: "type4",
+            //         type: "scatter",
+            //         // symbol: "pin",
+            //         coordinateSystem: "geo",
+            //         data: computed.type4,
+            //         ...scatterProperyt,
+            //     },
+            // ],
         };
         this.echartsIns.setOption(option);
     }
+    //动态绘制风险
+    drawRisk(risks) {
+        const computed = computeRisk(risks);
+        const scatterProperyt = {
+            symbolSize: function (val) {
+                return val[2] / 10;
+            },
+            encode: {
+                value: 2, //指定元素的第三个元素值 作为值 映射
+            },
+            label: {
+                formatter: "{b}:\n{c}",
+                position: "right",
+                show: false,
+                backgroundColor: "#2e4639",
+                color: "#fff",
+                padding: 10,
+            },
+            //   itemStyle: {
+            //     color: "purple",
+            //   },
+            emphasis: {
+                label: {
+                    show: true,
+                },
+            },
+        };
+        const option = {
+            series: [
+                {
+                    name: 'risk',
+                    // type: 'scatter',
+                    type: 'effectScatter',
+                    //MARK: echarts 的散点图 和底图一起在canvas 里绘制的 无法 使用获取并操作
+                    // symbol: '<path data-checkpointId="${checkpointId}" class="shinning" style="transition: fill 0.5s ease-in-out;" d="M512.036571 950.857143c-70.546286 0-365.714286-276.589714-365.714285-548.571429a365.714286 365.714286 0 0 1 731.428571 0c0 271.981714-295.168 548.571429-365.714286 548.571429z" fill="#d81e06" p-id="11426"></path>',
+                    // symbol: 'pin',
+                    coordinateSystem: "geo",
+                    data: computed,
+                    ...scatterProperyt
+                }
+            ]
+        }
+        this.echartsIns.setOption(option);
+    }
+    //移除 风险 点位
+    removeRisk() {
+
+    }
+
     //事件绑定器
     bindMakersEventHandler(eventType, target, handler) {
         this.echartsIns.on(eventType, target, handler);
@@ -257,6 +321,15 @@ export class mapController {
                 });
                 polylines.push(polyline)
             })
+            // const polyline = new AMap.Polyline({
+            //     strokeWeight: 1,
+            //     path: locations[i].bounds,
+            //     fillColor: 'transparent',
+            //     // fillOpacity: 0.2,
+            //     strokeColor: 'black',//#0000ff
+            //     extData: { towner: locations[i].towner }
+            // });
+            // polylines.push(polyline)
         }
         // console.log(polygonLayer.add);
         borderLayer.add(polylines);
@@ -278,7 +351,8 @@ export class mapController {
                     strokeWeight: 2,
                     strokeOpacity: 0.5,
                     fillColor: this.typeColor[riskType],
-                    fillOpacity: 0.5,
+                    // fillColor:'red',
+                    fillOpacity: 1,
                     zIndex: 10,
                     cursor: 'pointer',
                     extData: {
@@ -320,7 +394,7 @@ export class mapController {
     removeRisk(solved) {
         console.log(this.riskMarkers);
         solved.forEach((item) => {
-            //FIXME:相等却不返回
+            //DEBUG:相等却不返回
             // const index = this.riskMarkers.findIndex((maker) => {
             //     const { companyId } = maker.getExtData();
             //     console.log(companyId === item.companyId);
@@ -338,5 +412,15 @@ export class mapController {
         this.RSMarkers.forEach((maker) => {
             maker.on(eventType, handler);
         })
+    }
+    //清除 makers 上的事件
+    removeMakersEventHandler(eventType) {
+        this.RSMarkers.forEach((maker) => {
+            maker.clearEvents(eventType);
+        })
+    }
+    //地图绑定事件
+    bindMapEventHandler(eventType, handler) {
+        this.mapIns.on(eventType, handler);
     }
 }

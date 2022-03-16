@@ -22,7 +22,7 @@ function calBounds(locations) {
     const AMap = window.AMap;
     for (let i = 0; i < locations.length; i++) {
         locations[i].borders = [];//边界 位置
-        locations[i].bounds=[];
+        locations[i].bounds = [];
         //查找最大的多边形
         let c = 0;
         let maxIdx = 0;
@@ -33,43 +33,45 @@ function calBounds(locations) {
             }
         });
         //获取整个边框
-        
+
         //TODO:获取每个区域的边框 和 center
         locations[i].locations.split("|").forEach((locs, idx) => {
             if (locs == "") return;
             const path = [];
-            const bounds=[];//测试
+            const bounds = [];//测试
             //TODO:计算
             locs.split(";").forEach(p => {
                 if (p == "") return;
                 var pp = p.split(",");
-                path.push(new AMap.LngLat(pp[0] * 1, pp[1] * 1, true));//转换为经纬度
+                path.push([pp[0] * 1, pp[1] * 1]);
                 bounds.push([pp[0] * 1, pp[1] * 1]);
             });
 
             if (idx == maxIdx) {
-                var l = path[0].lng;
-                var t = path[0].lat;
+                var l = path[0][0];
+                var t = path[0][1];
                 var r = l;
                 var b = t;
                 for (var j = 1; j < path.length; j++) {
-                    if (l > path[j].lng) {
-                        l = path[j].lng;
+                    if (l > path[j][0]) {
+                        l = path[j][0];
                     }
-                    if (r < path[j].lng) {
-                        r = path[j].lng;
+                    if (r < path[j][0]) {
+                        r = path[j][0];
                     }
-                    if (b > path[j].lat) {
-                        b = path[j].lat;
+                    if (b > path[j][1]) {
+                        b = path[j][1];
                     }
-                    if (t < path[j].lat) {
-                        t = path[j].lat;
+                    if (t < path[j][1]) {
+                        t = path[j][1];
                     }
                 }
-                locations[i].center = { x: (l + r) / 2, y: (b + t) / 2 };//计算得到 区域的中心
+                locations[i].center = [(l + r) / 2, (b + t) / 2];//计算得到 区域的中心
+                // console.log( locations[i].center);
             }
             locations[i].borders.push(path);
             locations[i].bounds.push(...bounds);//测试
+            // locations[i].bounds.push(path);//测试
         });
     }
     return locations;
@@ -82,3 +84,87 @@ export function GetLocations() {
     return calculated;
 }
 
+
+//模拟获取 GeoJson对象
+export function getGeoJson() {
+    const locations = GetLocations();
+    const geo = {
+        type: "FeatureCollection",
+        features: []
+    };
+    locations.forEach(item => {
+        const { bounds, towner, center } = item;
+        geo.features.push({
+            properties: {
+                name: towner,
+                center
+            },
+            geometry: {
+                coordinates: [[...bounds]],
+                type: "Polygon"
+            }
+        })
+    })
+    return geo;
+}
+//test
+export function getGeoJson1() {
+    const locations = GetLocations();
+    const geo = {
+        type: "FeatureCollection",
+        features: []
+    };
+
+    //第一个locations 记录的全区的数据
+    geo.features.push({
+        properties: {
+            name: locations[0].towner,
+            center: locations[0].center
+        },
+        geometry: {
+            coordinates: [locations[0].bounds],
+            type: "Polygon"
+        }
+    })
+    // geo.features.push({
+    //     properties: {
+    //         name: locations[0].towner,
+    //         center: locations[0].center
+    //     },
+    //     geometry: {
+    //         coordinates: [[105.762299, 29.017061]
+    //             , [105.761665, 29.016836]],
+    //         type: "LineString"
+    //     }
+    // })
+    // locations.forEach(item=>{
+    //     console.log(item.towner);
+    //     geo.features.push({
+    //             properties: {
+    //                 name: item.towner,
+    //                 center: item.center
+    //             },
+    //             geometry: {
+    //                 coordinates: [...item.borders[0]],
+    //                 type: "LineString"
+    //             }
+    //         })
+    // })
+    for (let i = 1; i < locations.length; i++) {
+        const { bounds, towner, center, borders } = locations[i];
+        geo.features.push({
+            properties: {
+                name: towner,
+                center
+            },
+            geometry: {
+                // coordinates: [bounds],
+                coordinates:  [bounds],
+                type: "Polygon"
+            }
+        })
+
+    }
+
+    return geo;
+}
